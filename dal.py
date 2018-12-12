@@ -22,6 +22,27 @@ def save(table_name, columns, values):
             connection.close()
 
 
+def update(table_name, columns, values, where_condition_string):
+    connection = _get_connection()
+
+    if len(columns) != len(values):
+        raise Exception(f'Num columns [{len(columns)}] not equal to num of values [{len(values)}]')
+
+    assignment_string = ",".join([f"{c}=%s" for c in columns])
+
+    with connection.cursor() as cursor:
+
+        try:
+            sql = f"UPDATE {table_name} " \
+                  f"SET {assignment_string} " \
+                  f"WHERE {where_condition_string}"
+            cursor.execute(sql, values)
+            connection.commit()
+            return cursor.lastrowid
+        finally:
+            connection.close()
+
+
 def get(table_name, columns, where_condition_string):
     connection = _get_connection()
     columns_string = ','.join(columns)
@@ -46,6 +67,7 @@ def exists(table_name, where_condition_string):
             return len(existing_entry) > 0
         finally:
             connection.close()
+
 
 def _get_connection():
     return pymysql.connect(host='fjv3-cluster.cluster-cdeoqg4injkb.eu-west-1.rds.amazonaws.com',
